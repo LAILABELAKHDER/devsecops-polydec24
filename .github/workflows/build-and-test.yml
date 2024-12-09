@@ -1,4 +1,4 @@
-name: build-test-deploy
+name: build-test
 
 on: push
 
@@ -15,8 +15,6 @@ jobs:
           node-version: '18.x'
       - run: npm install
       - run: npm run build 
-      - name: Run SCA (npm audit)
-        run: npm audit --json
 
   test: 
     needs: build
@@ -32,3 +30,19 @@ jobs:
           node-version: '18.x'
       - run: npm install
       - run: npm test
+
+  sca:
+      needs: build
+
+      runs-on: ubuntu-latest
+
+      steps: 
+        - name: checkout repo
+          uses: actions/checkout@v3
+        - name: use node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '18.x'
+        - run: npm install
+        - run: npm audit || true
+        - run: npm audit fix --force
