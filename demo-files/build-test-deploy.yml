@@ -1,15 +1,14 @@
-name: build-test-deploy
+name: build-test
 
 on: push
 
 jobs: 
   build:
     runs-on: ubuntu-latest
-
     steps: 
-      - name: checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
-      - name: use node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
@@ -18,52 +17,30 @@ jobs:
 
   test: 
     needs: build
-
     runs-on: ubuntu-latest
-
     steps: 
-      - name: checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
-      - name: use node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
       - run: npm install
       - run: npm test
 
-  deploy:
+  sast:
     needs: test
-
-    permissions:
-      contents: write
-      pages: write     
-      id-token: write  
-
-    environment:
-      name: production
-      url: ${{ steps.deployment.outputs.page_url }}
-    
     runs-on: ubuntu-latest
-    
     steps:
-      - name: checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install Bearer
+        run: |
+          curl -sfL https://raw.githubusercontent.com/Bearer/bearer/main/contrib/install.sh | sh
+          sudo mv ./bin/bearer /usr/local/bin/
+      - name: Run Bearer SAST
+        run: bearer scan . --format sarif --output results.sarif
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: use node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - name: configure github pages
-        uses: actions/configure-pages@v3
-        with:
-          static_site_generator: next
-      - run: npm install
-      - run: npm run build    
-      - name: upload artifacts
-        uses: actions/upload-pages-artifact@v1
-        with: 
-          path: './out'
-      - name: deploy
-        id: deployment
-        uses: actions/deploy-pages@v1
+          sarif_file: results.sarif
