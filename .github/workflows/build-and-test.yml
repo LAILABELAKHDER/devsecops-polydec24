@@ -34,12 +34,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install Bearer
-        run: |
-          curl -sfL https://raw.githubusercontent.com/Bearer/bearer/main/contrib/install.sh | sh
-          sudo mv ./bin/bearer /usr/local/bin/
       - name: Run Bearer SAST
-        run: bearer scan . --format sarif --output results.sarif
+        uses: bearer/bearer-action@v2
+        with:
+          format: sarif
+          output: results.sarif
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
         with:
