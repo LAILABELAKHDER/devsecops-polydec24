@@ -1,45 +1,61 @@
-name: build-test-deploy
+name: build-test
 
 on: push
 
 jobs: 
   build:
     runs-on: ubuntu-latest
+
     steps: 
-      - name: Checkout repository
+      - name: checkout repo
         uses: actions/checkout@v3
-      - name: Set up Node.js
+      - name: use node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
       - run: npm install
-      - run: npm run build 
+      - run: npm run build
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
 
   test: 
     needs: build
+
     runs-on: ubuntu-latest
+
     steps: 
-      - name: Checkout repository
+      - name: checkout repo
         uses: actions/checkout@v3
-      - name: Set up Node.js
+      - name: use node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
       - run: npm install
       - run: npm test
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
 
+  sca:
+      needs: build
+
+      runs-on: ubuntu-latest
+
+      steps: 
+        - name: checkout repo
+          uses: actions/checkout@v3
+        - name: use node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '18.x'
+        - run: npm install
+        - run: npm audit || true
+        - run: npm audit fix --force
+        
   sast:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Run Bearer SAST
-        uses: bearer/bearer-action@v2
-        with:
-          format: sarif
-          output: results.sarif
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: results.sarif
+      needs: build
+      
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Bearer
+          uses: bearer/bearer-action@v2
