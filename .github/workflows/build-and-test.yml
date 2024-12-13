@@ -49,3 +49,18 @@ jobs:
             node-version: '18.x'
         - run: npm install
         - run: npm audit
+        - name: Fix vulnerabilities
+          run: npm audit fix --force
+
+        - name: Re-run npm audit to ensure no vulnerabilities
+          run: npm audit
+
+        - name: Commit fixed dependencies
+          run: |
+            git config --local user.name "GitHub Actions"
+            git config --local user.email "actions@github.com"
+            git add package-lock.json
+            git commit -m "fix: resolved vulnerabilities via npm audit fix --force"
+            git push
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
