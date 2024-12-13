@@ -50,3 +50,11 @@ jobs:
         - run: npm install
         - run: npm audit
         
+  sast:
+      needs: build
+      
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Bearer
+          uses: bearer/bearer-action@v2
